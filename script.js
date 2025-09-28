@@ -30,7 +30,6 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
-// Show screens
 function showAuth() {
   document.getElementById('auth')?.classList.remove('hidden');
   document.getElementById('profile')?.classList.add('hidden');
@@ -49,7 +48,6 @@ function showChat() {
   document.getElementById('chat')?.classList.remove('hidden');
 }
 
-// Google Login
 async function signInWithGoogle() {
   try {
     await signInWithPopup(auth, provider);
@@ -58,7 +56,6 @@ async function signInWithGoogle() {
   }
 }
 
-// Set username
 async function setUsername() {
   const input = document.getElementById('usernameInput');
   const errorEl = document.getElementById('usernameError');
@@ -93,14 +90,14 @@ async function setUsername() {
   errorEl.textContent = '';
   showChat();
 
-  // Open bot after delay
   setTimeout(() => {
     const botItem = document.getElementById('botChatItem');
-    if (botItem) botItem.click();
+    if (botItem && currentUser?.username) {
+      showBotLoginNotification(currentUser.username);
+    }
   }, 300);
 }
 
-// Bot notification
 function showBotLoginNotification(username) {
   const chatTitle = document.getElementById('chatTitle');
   const messagesDiv = document.getElementById('messages');
@@ -121,7 +118,6 @@ function showBotLoginNotification(username) {
   `;
 }
 
-// Open chat with user
 function openChatWithUser(user) {
   const chatTitle = document.getElementById('chatTitle');
   const messagesDiv = document.getElementById('messages');
@@ -131,7 +127,6 @@ function openChatWithUser(user) {
   messagesDiv.innerHTML = `<div class="msg in">Chat with @${user.username} is ready.</div>`;
 }
 
-// Search user
 async function searchUser() {
   const searchInput = document.getElementById('searchInput');
   if (!searchInput) return;
@@ -150,7 +145,6 @@ async function searchUser() {
   alert(`User @${query} not found.`);
 }
 
-// Handle URL: /webmss/user/USERNAME
 async function handleUrlUsername() {
   const path = window.location.pathname;
   const match = path.match(/^\/webmss\/user\/([a-z0-9_]+)$/);
@@ -169,7 +163,6 @@ async function handleUrlUsername() {
     }
   }
 
-  // User not found
   if (chatTitle && messagesDiv) {
     chatTitle.textContent = 'Error';
     messagesDiv.innerHTML = `
@@ -181,7 +174,6 @@ async function handleUrlUsername() {
   }
 }
 
-// Auth state observer
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -197,15 +189,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-  // Auth
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
-
-  // Profile
   document.getElementById('saveUsernameBtn')?.addEventListener('click', setUsername);
-
-  // Search
+  
   const searchBtn = document.getElementById('searchBtn');
   const searchInput = document.getElementById('searchInput');
   if (searchBtn) searchBtn.addEventListener('click', searchUser);
@@ -215,12 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Back button
   document.getElementById('backBtn')?.addEventListener('click', () => {
     document.querySelector('.sidebar')?.classList.add('show');
   });
 
-  // Bot chat
   document.getElementById('botChatItem')?.addEventListener('click', () => {
     if (currentUser && currentUser.username) {
       showBotLoginNotification(currentUser.username);
