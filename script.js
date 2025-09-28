@@ -1,4 +1,4 @@
-// Firebase Config
+// Firebase SDK (Modular)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getAuth,
@@ -11,12 +11,10 @@ import {
   doc,
   setDoc,
   getDoc,
-  collection,
-  query,
-  where,
-  getDocs
+  collection
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
+// Config
 const firebaseConfig = {
   apiKey: "AIzaSyDkyiRV4s1mx-u0vXTFugt1VD_Ki7Sl7Sw",
   authDomain: "chat-29c7e.firebaseapp.com",
@@ -32,38 +30,51 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
-let currentChatId = null;
 
-// DOM
+// DOM Elements
 const authScreen = document.getElementById('auth');
 const profileScreen = document.getElementById('profile');
 const chatScreen = document.getElementById('chat');
 const messagesDiv = document.getElementById('messages');
 const chatTitle = document.getElementById('chatTitle');
+const searchResult = document.getElementById('searchResult');
 
-// Auth state
+// Auth State
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists() && userDoc.data().username) {
-      // Пользователь уже настроил username
       showChat();
-      notifyBotAboutLogin(userDoc.data().username);
+      showBotLoginNotification(userDoc.data().username);
     } else {
-      // Нужно выбрать username
-      profileScreen.classList.remove('hidden');
-      authScreen.classList.add('hidden');
+      showProfileSetup();
     }
   } else {
-    currentUser = null;
-    authScreen.classList.remove('hidden');
-    profileScreen.classList.add('hidden');
-    chatScreen.classList.add('hidden');
+    showAuth();
   }
 });
 
-// Google Sign-In
+// Show screens
+function showAuth() {
+  authScreen.classList.remove('hidden');
+  profileScreen.classList.add('hidden');
+  chatScreen.classList.add('hidden');
+}
+
+function showProfileSetup() {
+  authScreen.classList.add('hidden');
+  profileScreen.classList.remove('hidden');
+  chatScreen.classList.add('hidden');
+}
+
+function showChat() {
+  authScreen.classList.add('hidden');
+  profileScreen.classList.add('hidden');
+  chatScreen.classList.remove('hidden');
+}
+
+// Google Login
 async function signInWithGoogle() {
   try {
     await signInWithPopup(auth, provider);
@@ -78,7 +89,6 @@ async function setUsername() {
   const errorEl = document.getElementById('usernameError');
   const username = input.value.trim().toLowerCase();
 
-  // Валидация
   if (username.length < 5 || username.length > 32) {
     errorEl.textContent = 'Username must be 5–32 characters.';
     return;
@@ -88,14 +98,12 @@ async function setUsername() {
     return;
   }
 
-  // Проверка уникальности
   const usernameDoc = await getDoc(doc(db, 'usernames', username));
   if (usernameDoc.exists()) {
     errorEl.textContent = 'Username already taken.';
     return;
   }
 
-  // Сохранение
   await setDoc(doc(db, 'usernames', username), { uid: currentUser.uid });
   await setDoc(doc(db, 'users', currentUser.uid), {
     uid: currentUser.uid,
@@ -107,73 +115,56 @@ async function setUsername() {
 
   errorEl.textContent = '';
   showChat();
-  notifyBotAboutLogin(username);
+  showBotLoginNotification(username);
 }
 
-function notifyBotAboutLogin(username) {
-  // Открываем чат с ботом и показываем уведомление
-  currentChatId = 'flynet_bot_chat';
+// Bot notification
+function showBotLoginNotification(username) {
+  document.getElementById('botChatItem').click(); // имитация клика
+}
+
+// Open bot chat
+document.getElementById('botChatItem')?.addEventListener('click', () => {
   chatTitle.textContent = 'FLYNET BOT';
   messagesDiv.innerHTML = `
-    <div class="msg">
+    <div class="msg in">
+      👋 Hello! I'm <strong>FLYNET BOT</strong> (flynetccbot).<br><br>
       🔔 <strong>New login detected!</strong><br>
-      User <code>@${username}</code> has signed in to FLYNET.<br><br>
-      Welcome to FLYNET!<br>
-      — <em>FLYNET BOT (flynetccbot)</em>
+      User <code>@${currentUser?.displayName?.toLowerCase() || 'user'}</code> has signed in.<br><br>
+      To find someone, type their username above.
     </div>
   `;
-}
-
-function showChat() {
-  authScreen.classList.add('hidden');
-  profileScreen.classList.add('hidden');
-  chatScreen.classList.remove('hidden');
-}
+});
 
 // Search user
 async function searchUser() {
   const query = document.getElementById('searchInput').value.trim().toLowerCase();
-  const resultEl = document.getElementById('searchResult');
   if (!query) {
-    resultEl.textContent = 'Enter a username to search.';
+    searchResult.textContent = 'Enter a username to search.';
     return;
   }
 
-  const doc = await getDoc(doc(db, 'usernames', query));
-  if (doc.exists()) {
-    const userDoc = await getDoc(doc(db, 'users', doc.data().uid));
+  const docSnap = await getDoc(doc(db, 'usernames', query));
+  if (docSnap.exists()) {
+    const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
     if (userDoc.exists()) {
       const user = userDoc.data();
-      resultEl.innerHTML = `
+      searchResult.innerHTML = `
         ✅ Found: <strong>${user.displayName}</strong><br>
-        Username: <code>@${user.username}</code><br>
-        <button class="btn" onclick="startChat('${user.uid}', '${user.displayName}')">Open Chat</button>
+        Username: <code>@${user.username}</code>
       `;
     }
   } else {
-    resultEl.textContent = 'User not found.';
+    searchResult.textContent = 'User not found.';
   }
 }
 
-function startChat(uid, name) {
-  alert(`Chat with ${name} (UID: ${uid}) would open here.`);
-  // Здесь можно реализовать открытие чата
-}
-
-// Make functions global
-window.signInWithGoogle = signInWithGoogle;
-window.setUsername = setUsername;
-window.searchUser = searchUser;
-
-// Open bot chat
-window.openBotChat = function() {
-  currentChatId = 'flynet_bot_chat';
-  chatTitle.textContent = 'FLYNET BOT';
-  messagesDiv.innerHTML = `
-    <div class="msg">
-      👋 Hello! I'm <strong>FLYNET BOT</strong> (flynetccbot).<br><br>
-      I notify you about new logins and help you navigate FLYNET.<br><br>
-      To find someone, type their username above.
-    </div>
-  `;
-};
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
+  document.getElementById('saveUsernameBtn')?.addEventListener('click', setUsername);
+  document.getElementById('searchBtn')?.addEventListener('click', searchUser);
+  document.getElementById('backBtn')?.addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.add('show');
+  });
+});
