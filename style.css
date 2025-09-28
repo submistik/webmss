@@ -338,3 +338,25 @@ body {
   color: var(--text-secondary);
   text-align: center;
 }
+/* Search in header */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+}
+.search-input {
+  flex: 1;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 20px;
+  outline: none;
+  font-size: 14px;
+}
+.header .icon-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
