@@ -31,22 +31,31 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
-// DOM Elements
+// DOM
 const authScreen = document.getElementById('auth');
 const profileScreen = document.getElementById('profile');
 const chatScreen = document.getElementById('chat');
 const messagesDiv = document.getElementById('messages');
 const chatTitle = document.getElementById('chatTitle');
-const searchResult = document.getElementById('searchResult');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
 
-// Auth State
+// Auth state
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (userDoc.exists() && userDoc.data().username) {
       showChat();
-      showBotLoginNotification(userDoc.data().username);
+      // Проверяем URL на наличие /user/USERNAME
+      const path = window.location.pathname;
+      const match = path.match(/^\/webmss\/user\/([a-z0-9_]+)$/);
+      if (match) {
+        const targetUsername = match[1];
+        searchAndOpenChat(targetUsername);
+      } else {
+        showBotLoginNotification(userDoc.data().username);
+      }
     } else {
       showProfileSetup();
     }
@@ -55,7 +64,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Show screens
+// Screens
 function showAuth() {
   authScreen.classList.remove('hidden');
   profileScreen.classList.add('hidden');
@@ -115,55 +124,85 @@ async function setUsername() {
 
   errorEl.textContent = '';
   showChat();
-  showBotLoginNotification(username);
+  setTimeout(() => {
+    document.getElementById('botChatItem')?.click();
+  }, 300);
 }
 
-// Bot notification
+// Bot notification with email + username
 function showBotLoginNotification(username) {
-  document.getElementById('botChatItem').click(); // имитация клика
-}
-
-// Open bot chat
-document.getElementById('botChatItem')?.addEventListener('click', () => {
   chatTitle.textContent = 'FLYNET BOT';
   messagesDiv.innerHTML = `
     <div class="msg in">
       👋 Hello! I'm <strong>FLYNET BOT</strong> (flynetccbot).<br><br>
       🔔 <strong>New login detected!</strong><br>
-      User <code>@${currentUser?.displayName?.toLowerCase() || 'user'}</code> has signed in.<br><br>
-      To find someone, type their username above.
+      Email: <code>${currentUser.email}</code><br>
+      Username: <code>@${username}</code><br><br>
+      Your profile link:<br>
+      <a href="https://submistik.github.io/webmss/user/${username}" target="_blank">
+        https://submistik.github.io/webmss/user/${username}
+      </a>
     </div>
   `;
+}
+
+// Open bot chat
+document.getElementById('botChatItem')?.addEventListener('click', () => {
+  showBotLoginNotification(currentUser?.username || 'user');
 });
 
 // Search user
 async function searchUser() {
-  const query = document.getElementById('searchInput').value.trim().toLowerCase();
-  if (!query) {
-    searchResult.textContent = 'Enter a username to search.';
-    return;
-  }
+  const query = searchInput.value.trim().toLowerCase();
+  if (!query) return;
 
   const docSnap = await getDoc(doc(db, 'usernames', query));
   if (docSnap.exists()) {
     const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
     if (userDoc.exists()) {
       const user = userDoc.data();
-      searchResult.innerHTML = `
-        ✅ Found: <strong>${user.displayName}</strong><br>
-        Username: <code>@${user.username}</code>
-      `;
+      openChatWithUser(user);
     }
   } else {
-    searchResult.textContent = 'User not found.';
+    alert(`User @${query} not found.`);
   }
+}
+
+// Open chat with user
+function openChatWithUser(user) {
+  chatTitle.textContent = user.displayName;
+  messagesDiv.innerHTML = `<div class="msg in">Chat with @${user.username} is ready.</div>`;
+  // Здесь можно реализовать реальный чат через Firestore
+}
+
+// Search by URL
+async function searchAndOpenChat(username) {
+  const docSnap = await getDoc(doc(db, 'usernames', username));
+  if (docSnap.exists()) {
+    const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
+    if (userDoc.exists()) {
+      openChatWithUser(userDoc.data());
+      return;
+    }
+  }
+  // Пользователь не найден
+  chatTitle.textContent = 'Error';
+  messagesDiv.innerHTML = `
+    <div class="msg in" style="color:#f44336;">
+      ❌ User <code>@${username}</code> not found.<br>
+      The link may be incorrect or the user hasn't set a username yet.
+    </div>
+  `;
 }
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
   document.getElementById('saveUsernameBtn')?.addEventListener('click', setUsername);
-  document.getElementById('searchBtn')?.addEventListener('click', searchUser);
+  searchBtn?.addEventListener('click', searchUser);
+  searchInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchUser();
+  });
   document.getElementById('backBtn')?.addEventListener('click', () => {
     document.querySelector('.sidebar').classList.add('show');
   });
