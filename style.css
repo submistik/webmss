@@ -360,3 +360,12 @@ body {
   height: 36px;
   font-size: 16px;
 }
+.chat-title {
+  font-weight: 500;
+  font-size: 16px;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
