@@ -4,10 +4,230 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FLYNET</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    :root {
+      --bg: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-tertiary: #2a2a2a;
+      --text: #ffffff;
+      --text-secondary: #b0b0b0;
+      --accent: #568af2;
+      --msg-in: #2a2a2a;
+      --msg-out: #0088cc;
+      --border: #333333;
+      --shadow: rgba(0,0,0,0.3);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Auth */
+    .auth-container {
+      width: 90%;
+      max-width: 400px;
+      padding: 30px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+    .auth-container h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .auth-btn:hover {
+      opacity: 0.9;
+    }
+    .auth-btn.google { background: #4285f4; }
+    .auth-container input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      color: var(--text);
+    }
+    .error {
+      color: #f44336;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    /* Layout */
+    #chat {
+      display: flex !important;
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar {
+      width: 300px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    /* Header */
+    .header {
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .back-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .chat-title {
+      font-weight: 500;
+      font-size: 16px;
+      flex: 1;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Chat List */
+    .chat-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .chat-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-item:hover {
+      background: var(--bg);
+    }
+    .avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    .chat-info {
+      margin-left: 12px;
+    }
+    .chat-name {
+      font-weight: 500;
+    }
+    .chat-last {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .msg {
+      max-width: 70%;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      border-radius: 18px;
+      word-break: break-word;
+      background: var(--msg-in);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: absolute;
+        transform: translateX(-100%);
+        z-index: 10;
+        box-shadow: 2px 0 10px var(--shadow);
+        height: 100%;
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .back-btn {
+        display: block !important;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -21,11 +241,11 @@
     </div>
   </div>
 
-  <!-- Profile Setup -->
+  <!-- Profile -->
   <div id="profile" class="screen hidden">
     <div class="auth-container">
       <h2>Choose your username</h2>
-      <p>5–32 characters. English letters, digits, underscores only.</p>
+      <p>5–32 chars. English letters, digits, underscores.</p>
       <input type="text" id="usernameInput" placeholder="e.g. flynet_user" maxlength="32" />
       <button id="saveUsernameBtn" class="auth-btn">Save</button>
       <p id="usernameError" class="error"></p>
@@ -34,12 +254,11 @@
 
   <!-- Chat -->
   <div id="chat" class="screen hidden">
-    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="header">
         <div class="title">Chats</div>
       </div>
-      <div class="chat-list" id="chatList">
+      <div class="chat-list">
         <div class="chat-item" id="botChatItem">
           <div class="avatar">
             <img src="https://i.imgur.com/8Q6zJdL.png" alt="FLYNET Bot" />
@@ -49,12 +268,10 @@
             <div class="chat-last">System notifications</div>
           </div>
         </div>
-        <div id="userChats"></div>
       </div>
     </div>
 
-    <!-- Main Chat -->
-    <div class="main" id="mainChat">
+    <div class="main">
       <div class="header">
         <button class="back-btn" id="backBtn">‹</button>
         <div id="chatTitle" class="chat-title">FLYNET</div>
@@ -65,6 +282,201 @@
     </div>
   </div>
 
-  <script type="module" src="script.js"></script>
+  <!-- Firebase SDK (Modular via CDN) -->
+  <script type="module">
+    // Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithPopup,
+      GoogleAuthProvider,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+    // Your config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkyiRV4s1mx-u0vXTFugt1VD_Ki7Sl7Sw",
+      authDomain: "chat-29c7e.firebaseapp.com",
+      projectId: "chat-29c7e",
+      storageBucket: "chat-29c7e.firebasestorage.app",
+      messagingSenderId: "191406446013",
+      appId: "1:191406446013:web:a964c205dc0d2883ff6ed4"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+
+    function showAuth() {
+      document.getElementById('auth').classList.remove('hidden');
+      document.getElementById('profile').classList.add('hidden');
+      document.getElementById('chat').classList.add('hidden');
+    }
+
+    function showProfile() {
+      document.getElementById('auth').classList.add('hidden');
+      document.getElementById('profile').classList.remove('hidden');
+      document.getElementById('chat').classList.add('hidden');
+    }
+
+    function showChat() {
+      document.getElementById('auth').classList.add('hidden');
+      document.getElementById('profile').classList.add('hidden');
+      document.getElementById('chat').classList.remove('hidden');
+    }
+
+    async function signInWithGoogle() {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        alert('Login failed: ' + e.message);
+      }
+    }
+
+    async function setUsername() {
+      const input = document.getElementById('usernameInput');
+      const errorEl = document.getElementById('usernameError');
+      const username = input.value.trim().toLowerCase();
+
+      if (username.length < 5 || username.length > 32) {
+        errorEl.textContent = '5–32 characters.';
+        return;
+      }
+      if (!/^[a-z0-9_]+$/.test(username)) {
+        errorEl.textContent = 'Only a-z, 0-9, _';
+        return;
+      }
+
+      const docSnap = await getDoc(doc(db, 'usernames', username));
+      if (docSnap.exists()) {
+        errorEl.textContent = 'Username taken.';
+        return;
+      }
+
+      await setDoc(doc(db, 'usernames', username), { uid: currentUser.uid });
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        username: username
+      }, { merge: true });
+
+      errorEl.textContent = '';
+      showChat();
+
+      setTimeout(() => {
+        const botItem = document.getElementById('botChatItem');
+        if (botItem) botItem.click();
+      }, 300);
+    }
+
+    function showBotMessage(username) {
+      const title = document.getElementById('chatTitle');
+      const msgs = document.getElementById('messages');
+      if (!title || !msgs) return;
+
+      title.textContent = 'FLYNET BOT';
+      msgs.innerHTML = `
+        <div class="msg">
+          👋 Hello! I'm <strong>FLYNET BOT</strong> (flynetccbot).<br><br>
+          🔔 <strong>New login!</strong><br>
+          Email: <code>${currentUser.email}</code><br>
+          Username: <code>@${username}</code><br><br>
+          Your link:<br>
+          <a href="https://submistik.github.io/webmss/user/${username}" target="_blank">
+            https://submistik.github.io/webmss/user/${username}
+          </a>
+        </div>
+      `;
+    }
+
+    async function searchUser() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!query) return;
+
+      const docSnap = await getDoc(doc(db, 'usernames', query));
+      if (docSnap.exists()) {
+        const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
+        if (userDoc.exists()) {
+          const user = userDoc.data();
+          document.getElementById('chatTitle').textContent = user.displayName;
+          document.getElementById('messages').innerHTML = `<div class="msg">Chat with @${user.username} ready.</div>`;
+          return;
+        }
+      }
+      alert(`@${query} not found.`);
+    }
+
+    // URL handling
+    async function handleUrl() {
+      const path = window.location.pathname;
+      const match = path.match(/^\/webmss\/user\/([a-z0-9_]+)$/);
+      if (!match) return;
+
+      const username = match[1];
+      const docSnap = await getDoc(doc(db, 'usernames', username));
+      const title = document.getElementById('chatTitle');
+      const msgs = document.getElementById('messages');
+
+      if (docSnap.exists()) {
+        const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
+        if (userDoc.exists()) {
+          const user = userDoc.data();
+          title.textContent = user.displayName;
+          msgs.innerHTML = `<div class="msg">Chat with @${user.username} ready.</div>`;
+          return;
+        }
+      }
+
+      if (title && msgs) {
+        title.textContent = 'Error';
+        msgs.innerHTML = `<div class="msg" style="color:#f44336;">❌ User @${username} not found.</div>`;
+      }
+    }
+
+    // Auth state
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().username) {
+          showChat();
+          handleUrl();
+        } else {
+          showProfile();
+        }
+      } else {
+        showAuth();
+      }
+    });
+
+    // Events
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('googleLoginBtn').addEventListener('click', signInWithGoogle);
+      document.getElementById('saveUsernameBtn').addEventListener('click', setUsername);
+      document.getElementById('searchBtn').addEventListener('click', searchUser);
+      document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchUser();
+      });
+      document.getElementById('backBtn').addEventListener('click', () => {
+        document.querySelector('.sidebar').classList.add('show');
+      });
+      document.getElementById('botChatItem').addEventListener('click', () => {
+        if (currentUser && currentUser.username) {
+          showBotMessage(currentUser.username);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
