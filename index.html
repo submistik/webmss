@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FLYNET</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="theme-dark">
+
+  <!-- Auth Screen -->
+  <div id="auth" class="screen">
+    <div class="auth-container">
+      <h2>FLYNET</h2>
+      <button onclick="signInAnonymously()" class="auth-btn">Войти анонимно</button>
+      <button onclick="signInWithGoogle()" class="auth-btn google">Войти через Google</button>
+      <p>рекомендуем входить через google</p>
+      <button onclick="signInWithPhone()" class="auth-btn phone">Войти по номеру</button>
+      <div class="divider">или</div>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Пароль" />
+      <button onclick="handleLogin()" class="auth-btn">Войти</button>
+      <button onclick="handleRegister()" class="auth-btn outline">Регистрация</button>
+    </div>
+  </div>
+
+  <!-- Chat Screen -->
+  <div id="chat" class="screen hidden">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="header">
+        <div class="title">Чаты</div>
+        <div class="header-actions">
+          <button onclick="openSettings()" class="icon-btn">⚙️</button>
+        </div>
+      </div>
+      <div class="chat-list" id="chatList">
+        <!-- FLYNET Bot -->
+        <div class="chat-item" onclick="openBotChat()">
+          <div class="avatar">
+            <img src="https://i.imgur.com/8Q6zJdL.png" alt="FLYNET Bot" />
+          </div>
+          <div class="chat-info">
+            <div class="chat-name">FLYNET Bot</div>
+            <div class="chat-last">Помощник программы</div>
+          </div>
+        </div>
+        <div class="loading">Загрузка...</div>
+      </div>
+    </div>
+
+    <!-- Main Chat -->
+    <div class="main" id="mainChat">
+      <div class="header">
+        <button class="back-btn" onclick="showChats()">‹</button>
+        <div class="chat-info">
+          <div id="chatTitle">Выберите чат</div>
+          <div id="chatStatus" class="status">в сети</div>
+        </div>
+        <div class="header-actions">
+          <button onclick="toggleEmojiPanel()" class="icon-btn">🙂</button>
+        </div>
+      </div>
+      <div id="messages" class="messages"></div>
+      <div class="input-area">
+        <input type="text" id="messageInput" placeholder="Сообщение" onkeypress="if(event.key==='Enter') sendMessage()" />
+        <button onclick="sendMessage()" class="send-btn">➤</button>
+      </div>
+    </div>
+
+    <!-- Emoji Panel -->
+    <div class="emoji-panel" id="emojiPanel">
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <span>Настройки</span>
+        <button onclick="closeSettings()" class="icon-btn">✕</button>
+      </div>
+      <div class="settings-content">
+        <button onclick="logout()" class="btn-danger">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-storage-compat.js"></script>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
