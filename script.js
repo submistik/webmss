@@ -1,4 +1,4 @@
-// Firebase SDK (Modular)
+// Firebase SDK (Modular via CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getAuth,
@@ -10,11 +10,10 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
-  collection
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-// Config
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyDkyiRV4s1mx-u0vXTFugt1VD_Ki7Sl7Sw",
   authDomain: "chat-29c7e.firebaseapp.com",
@@ -31,56 +30,23 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
-// DOM
-const authScreen = document.getElementById('auth');
-const profileScreen = document.getElementById('profile');
-const chatScreen = document.getElementById('chat');
-const messagesDiv = document.getElementById('messages');
-const chatTitle = document.getElementById('chatTitle');
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-
-// Auth state
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists() && userDoc.data().username) {
-      showChat();
-      // Проверяем URL на наличие /user/USERNAME
-      const path = window.location.pathname;
-      const match = path.match(/^\/webmss\/user\/([a-z0-9_]+)$/);
-      if (match) {
-        const targetUsername = match[1];
-        searchAndOpenChat(targetUsername);
-      } else {
-        showBotLoginNotification(userDoc.data().username);
-      }
-    } else {
-      showProfileSetup();
-    }
-  } else {
-    showAuth();
-  }
-});
-
-// Screens
+// Show screens
 function showAuth() {
-  authScreen.classList.remove('hidden');
-  profileScreen.classList.add('hidden');
-  chatScreen.classList.add('hidden');
+  document.getElementById('auth')?.classList.remove('hidden');
+  document.getElementById('profile')?.classList.add('hidden');
+  document.getElementById('chat')?.classList.add('hidden');
 }
 
 function showProfileSetup() {
-  authScreen.classList.add('hidden');
-  profileScreen.classList.remove('hidden');
-  chatScreen.classList.add('hidden');
+  document.getElementById('auth')?.classList.add('hidden');
+  document.getElementById('profile')?.classList.remove('hidden');
+  document.getElementById('chat')?.classList.add('hidden');
 }
 
 function showChat() {
-  authScreen.classList.add('hidden');
-  profileScreen.classList.add('hidden');
-  chatScreen.classList.remove('hidden');
+  document.getElementById('auth')?.classList.add('hidden');
+  document.getElementById('profile')?.classList.add('hidden');
+  document.getElementById('chat')?.classList.remove('hidden');
 }
 
 // Google Login
@@ -96,6 +62,8 @@ async function signInWithGoogle() {
 async function setUsername() {
   const input = document.getElementById('usernameInput');
   const errorEl = document.getElementById('usernameError');
+  if (!input || !errorEl) return;
+
   const username = input.value.trim().toLowerCase();
 
   if (username.length < 5 || username.length > 32) {
@@ -124,13 +92,20 @@ async function setUsername() {
 
   errorEl.textContent = '';
   showChat();
+
+  // Open bot after delay
   setTimeout(() => {
-    document.getElementById('botChatItem')?.click();
+    const botItem = document.getElementById('botChatItem');
+    if (botItem) botItem.click();
   }, 300);
 }
 
-// Bot notification with email + username
+// Bot notification
 function showBotLoginNotification(username) {
+  const chatTitle = document.getElementById('chatTitle');
+  const messagesDiv = document.getElementById('messages');
+  if (!chatTitle || !messagesDiv) return;
+
   chatTitle.textContent = 'FLYNET BOT';
   messagesDiv.innerHTML = `
     <div class="msg in">
@@ -146,13 +121,21 @@ function showBotLoginNotification(username) {
   `;
 }
 
-// Open bot chat
-document.getElementById('botChatItem')?.addEventListener('click', () => {
-  showBotLoginNotification(currentUser?.username || 'user');
-});
+// Open chat with user
+function openChatWithUser(user) {
+  const chatTitle = document.getElementById('chatTitle');
+  const messagesDiv = document.getElementById('messages');
+  if (!chatTitle || !messagesDiv) return;
+
+  chatTitle.textContent = user.displayName;
+  messagesDiv.innerHTML = `<div class="msg in">Chat with @${user.username} is ready.</div>`;
+}
 
 // Search user
 async function searchUser() {
+  const searchInput = document.getElementById('searchInput');
+  if (!searchInput) return;
+
   const query = searchInput.value.trim().toLowerCase();
   if (!query) return;
 
@@ -160,24 +143,24 @@ async function searchUser() {
   if (docSnap.exists()) {
     const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
     if (userDoc.exists()) {
-      const user = userDoc.data();
-      openChatWithUser(user);
+      openChatWithUser(userDoc.data());
+      return;
     }
-  } else {
-    alert(`User @${query} not found.`);
   }
+  alert(`User @${query} not found.`);
 }
 
-// Open chat with user
-function openChatWithUser(user) {
-  chatTitle.textContent = user.displayName;
-  messagesDiv.innerHTML = `<div class="msg in">Chat with @${user.username} is ready.</div>`;
-  // Здесь можно реализовать реальный чат через Firestore
-}
+// Handle URL: /webmss/user/USERNAME
+async function handleUrlUsername() {
+  const path = window.location.pathname;
+  const match = path.match(/^\/webmss\/user\/([a-z0-9_]+)$/);
+  if (!match) return;
 
-// Search by URL
-async function searchAndOpenChat(username) {
+  const username = match[1];
   const docSnap = await getDoc(doc(db, 'usernames', username));
+  const chatTitle = document.getElementById('chatTitle');
+  const messagesDiv = document.getElementById('messages');
+
   if (docSnap.exists()) {
     const userDoc = await getDoc(doc(db, 'users', docSnap.data().uid));
     if (userDoc.exists()) {
@@ -185,25 +168,62 @@ async function searchAndOpenChat(username) {
       return;
     }
   }
-  // Пользователь не найден
-  chatTitle.textContent = 'Error';
-  messagesDiv.innerHTML = `
-    <div class="msg in" style="color:#f44336;">
-      ❌ User <code>@${username}</code> not found.<br>
-      The link may be incorrect or the user hasn't set a username yet.
-    </div>
-  `;
+
+  // User not found
+  if (chatTitle && messagesDiv) {
+    chatTitle.textContent = 'Error';
+    messagesDiv.innerHTML = `
+      <div class="msg in" style="color:#f44336;">
+        ❌ User <code>@${username}</code> not found.<br>
+        The link may be incorrect or the user hasn't set a username yet.
+      </div>
+    `;
+  }
 }
+
+// Auth state observer
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists() && userDoc.data().username) {
+      showChat();
+      handleUrlUsername();
+    } else {
+      showProfileSetup();
+    }
+  } else {
+    showAuth();
+  }
+});
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+  // Auth
   document.getElementById('googleLoginBtn')?.addEventListener('click', signInWithGoogle);
+
+  // Profile
   document.getElementById('saveUsernameBtn')?.addEventListener('click', setUsername);
-  searchBtn?.addEventListener('click', searchUser);
-  searchInput?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') searchUser();
-  });
+
+  // Search
+  const searchBtn = document.getElementById('searchBtn');
+  const searchInput = document.getElementById('searchInput');
+  if (searchBtn) searchBtn.addEventListener('click', searchUser);
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchUser();
+    });
+  }
+
+  // Back button
   document.getElementById('backBtn')?.addEventListener('click', () => {
-    document.querySelector('.sidebar').classList.add('show');
+    document.querySelector('.sidebar')?.classList.add('show');
+  });
+
+  // Bot chat
+  document.getElementById('botChatItem')?.addEventListener('click', () => {
+    if (currentUser && currentUser.username) {
+      showBotLoginNotification(currentUser.username);
+    }
   });
 });
