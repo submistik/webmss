@@ -15,7 +15,7 @@
   <div id="auth" class="screen">
     <div class="auth-container">
       <h2>FLYNET</h2>
-      <button class="google-btn" onclick="signInWithGoogle()">
+      <button id="googleLoginBtn" class="auth-btn google">
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" /> Sign in with Google
       </button>
     </div>
@@ -27,20 +27,21 @@
       <h2>Choose your username</h2>
       <p>5–32 characters. English letters, digits, underscores only.</p>
       <input type="text" id="usernameInput" placeholder="e.g. flynet_user" maxlength="32" />
-      <button class="btn" onclick="setUsername()">Save</button>
+      <button id="saveUsernameBtn" class="auth-btn">Save</button>
       <p id="usernameError" class="error"></p>
     </div>
   </div>
 
   <!-- Chat -->
   <div id="chat" class="screen hidden">
-    <div class="sidebar">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
       <div class="header">
-        <div>Chats</div>
+        <div class="title">Chats</div>
       </div>
       <div class="chat-list" id="chatList">
         <!-- FLYNET BOT -->
-        <div class="chat-item" onclick="openBotChat()">
+        <div class="chat-item" id="botChatItem">
           <div class="avatar">
             <img src="https://i.imgur.com/8Q6zJdL.png" alt="FLYNET Bot" />
           </div>
@@ -53,20 +54,23 @@
       </div>
     </div>
 
+    <!-- Main Chat -->
     <div class="main" id="mainChat">
       <div class="header">
-        <div id="chatTitle">FLYNET</div>
+        <button class="back-btn" id="backBtn">‹</button>
+        <div class="chat-info">
+          <div id="chatTitle">FLYNET</div>
+        </div>
       </div>
       <div id="messages" class="messages"></div>
       <div class="input-area">
-        <input type="text" id="searchInput" placeholder="Search username..." onkeypress="if(event.key==='Enter') searchUser()" />
-        <button onclick="searchUser()" class="btn-icon">🔍</button>
+        <input type="text" id="searchInput" placeholder="Search username..." />
+        <button id="searchBtn" class="send-btn">🔍</button>
       </div>
-      <div id="searchResult"></div>
+      <div id="searchResult" class="search-result"></div>
     </div>
   </div>
 
-  <!-- Firebase SDK (Modular) -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
